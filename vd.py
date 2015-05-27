@@ -75,7 +75,12 @@ def update_newfile():
     j = json.loads(get_json(check_url, "GET"))
     if j['status'] == 'update':
         print("Files need to update: %s" % j['new-video'])
-        for f in j['new-video']: download_file(f)
+        files = get_all_video(VIDEO_PATH)
+        for f in j['new-video']:
+            if 'video/'+f in files:
+                print(f + " no need to update")
+                continue
+            else: download_file(f)
     else: raise Exception("BUG: wrong status, shouldn't be here if there's no new files!")
 
 def main():
