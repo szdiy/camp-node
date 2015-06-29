@@ -1,7 +1,7 @@
 #!/usr/bin/env guile
 !#
 
-(use-modules (artanis artanis) (artanis utils) (srfi srfi-1) (ice-9 ftw))
+(use-modules (artanis artanis) (artanis utils) (srfi srfi-1) (ice-9 ftw) (ice-9 match))
 (init-server)
 
 ;; TODO: use DB instead
@@ -10,7 +10,7 @@
 (define Q_MAX 3)
 
 (define upload-form
-  '(form (@ (method "POST") (enctype "multipart/form-data") (action "/upload.php"))
+  '(form (@ (method "POST") (enctype "multipart/form-data") (action "/scm/upload"))
          "File to upload: " (input (@ (type "file") (name "upfile"))) (br)
          "Notes about the file: " (input (@ (type "text") (name "note")))
          (br) (br)
@@ -54,15 +54,18 @@
       (hash-set! *node-table* id (cons id ql)) ; update existed files
       (:mime rc (json (object ("operation" "update") ("status" "ok" )))))))
 
-;; (post "/upload"
-;;   #:from-post `(store #:path "upload" #:mode #o664 #:success-ret ,(lambda (_ fl) fl))
-;;   #:mime 'json
-;;   (lambda (rc)
-;;     (when (> (queue-length *video-queue*) Q_MAX)
-;;           (queue-out! *node-table*))
-;;     (let ((file (car (:from-post rc 'store))))
-;;       (queue-in! *node-table* file)
-;;       (:mime rc (json (object ("operation" "upload") ("status" "ok")))))))
+(define (upload-stat sl fl) (list (car fl) (car sl)))
+(post "/scm/upload"
+  #:from-post `(store #:path "upload" #:mode #o664 #:success-ret ,upload-stat #:simple-ret? #f)
+  #:mime 'json
+  (lambda (rc)
+    (when (> (queue-length *video-queue*) Q_MAX)
+          (queue-out! *node-table*))
+    (match (:from-post rc 'store)
+      ((file size)
+       (queue-in! *video-queue* file)
+       (:mime rc (json (object ("operation" "upload") ("status" "ok") ("file" ,file) ("size" ,size)))))
+      (else (:mime rc (json (object ("operation" "upload") ("status" "failed"))))))))
 
 (get "/scm" (lambda () (tpl->response upload-form)))
 
