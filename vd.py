@@ -1,14 +1,25 @@
 #!/usr/bin/env python
 
-import httplib2, json, os, socket, time
+import httplib2, json, os, socket, time, signal, fcntl, struct
 from subprocess import Popen, call, PIPE
+from uuid import getnode as get_mac
 
-# FIXME: should allocate by server
-nid = '1'
-register_url = "http://localhost/scm/register/" + nid
-check_url = "http://localhost/scm/check/" + nid
-update_url = "http://localhost/scm/update/" + nid
+def get_ip_address(ifname):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    return socket.inet_ntoa(fcntl.ioctl(
+            s.fileno(),
+            0x8915,  # SIOCGIFADDR
+            struct.pack('256s', ifname[:15])
+            )[20:24])
+
+HEART_BEAT_PERIOD = 30 # 30 seconds
+nid = get_mac() # MAC address as the node ID
+nip = get_ip_address('wlan0')
+register_url = "http://localhost/scm/register/%s" % nid
+check_url = "http://localhost/scm/check/%s" % nid
+update_url = "http://localhost/scm/update/%s" % nid
 download_url = "http://localhost/upload/"
+heartbeat_url = "http://localhost/scm/heartbeat/%s/%s/%s"
 VIDEO_PATH = 'video'
 
 def get_json(url, method):
@@ -21,7 +32,13 @@ def get_json(url, method):
             print("Seems network error! Try it again...")
             time.sleep(5)
             continue
- 
+
+def heartbeat(signum, frame):
+    if signum == signal.SIGALRM:
+        print "heart beat!"
+        get_json(heartbeat_url % (nid, get_ip_address('wlan0'), time.time()), "GET")
+        signal.alarm(HEART_BEAT_PERIOD)
+
 def check_newfile():
     j = json.loads(get_json(check_url, "GET"))
     if j['status'] == 'no':
@@ -92,5 +109,11 @@ def main():
         if p: p.wait()
         time.sleep(1)
 
+def init():
+    signal.signal(signal.SIGALRM, heartbeat)
+    signal.alarm(1)
+    # TODO: upload IP address
+
 if __name__ == "__main__":
+    init()
     main()

@@ -1,7 +1,8 @@
 #!/usr/bin/env guile
 !#
 
-(use-modules (artanis artanis) (artanis utils) (srfi srfi-1) (ice-9 ftw) (ice-9 match))
+(use-modules (artanis artanis) (artanis utils) (srfi srfi-1)
+             (ice-9 ftw) (ice-9 match) (ice-9 format))
 (init-server)
 
 ;; TODO: use DB instead
@@ -67,6 +68,52 @@
        (:mime rc (json (object ("operation" "upload") ("status" "ok") ("file" ,file) ("size" ,size)))))
       (else (:mime rc (json (object ("operation" "upload") ("status" "failed"))))))))
 
-(get "/scm" (lambda () (tpl->response upload-form)))
+(get "/scm/upload" (lambda () (tpl->response upload-form)))
+
+
+(define (->mac s)
+  (cond
+   ((not s) #f)
+   (else
+    (let* ((str (format #f "~12,'0X" s))
+           (len (string-length str)))
+      (let lp((i 0) (ret '()))
+        (cond
+         ((>= i len) (string-upcase (string-join (reverse ret) ":")))
+         (else (lp (+ i 2) (cons (substring/shared str i (+ i 2)) ret)))))))))
+(define *node-status* (make-hash-table))
+(define *healthy-span* 30) ; 30 seconds
+(get "/scm/heartbeat/:id/:ip/:timestamp" #:mime 'json
+  (lambda (rc)
+    (let* ((id (->mac (string->number (params rc "id"))))
+           (ip (params rc "ip"))
+           (new (string->number (params rc "timestamp")))
+           (st (hash-ref *node-status* id))
+           (old (if st (caar st) new)))
+      (cond
+       ((not id)
+        (:mime rc (json (object ("operation" "heartbeat") ("status" "Invalid id")))))
+       ((not new)
+        (:mime rc (json (object ("operation" "heartbeat") ("status" "Invalid timestamp")))))
+       (else
+        (hash-set! *node-status* id (cons (cons old new) ip))
+        (:mime rc (json (object ("operation" "heartbeat") ("status" "ok")))))))))
+
+(define (anylize-node id st)
+  (let* ((old (caar st))
+         (new (cdar st))
+         (ip (cdr st))
+         (status (if (and (>= new old) (<= (- new old) *healthy-span*)) "live" "dead")))
+    (list id ip status)))
+(get "/scm/node/status" #:mime 'json
+  (lambda (rc)
+    (let ((sl (hash-map->list anylize-node *node-status*)))
+      (cond
+       ((null? sl) (:mime rc (json (object ("operation" "get_status") ("status" "null")))))
+       (else
+        (:mime rc (json (object
+                         ("operation" "get_status")
+                         ("status" "ok")
+                         ("result" ,sl)))))))))
 
 (run)
