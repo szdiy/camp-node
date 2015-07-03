@@ -14,12 +14,13 @@ def get_ip_address(ifname):
 
 HEART_BEAT_PERIOD = 30 # 30 seconds
 nid = get_mac() # MAC address as the node ID
-nip = get_ip_address('wlan0')
-register_url = "http://localhost/scm/register/%s" % nid
-check_url = "http://localhost/scm/check/%s" % nid
-update_url = "http://localhost/scm/update/%s" % nid
-download_url = "http://localhost/upload/"
-heartbeat_url = "http://localhost/scm/heartbeat/%s/%s/%s"
+check_url = "http://api.hack42.com/scm/video/check/%s" % nid
+update_url = "http://api.hack42.com/scm/video/update/%s" % nid
+download_url = "http://api.hack42.com/upload/"
+heartbeat_url = "http://api.hack42.com/scm/heartbeat/%s/%s/%s"
+notice_url = "http://api.hack42.com/notice.jpg"
+check_notice_url = "http://api.hack42.com/scm/notice/check/%s" % nid
+clean_notice_url = "http://api.hack42.com/scm/notice/clean/%s" % nid
 VIDEO_PATH = 'video'
 
 def get_json(url, method):
@@ -36,7 +37,7 @@ def get_json(url, method):
 def heartbeat(signum, frame):
     if signum == signal.SIGALRM:
         print "heart beat!"
-        get_json(heartbeat_url % (nid, get_ip_address('wlan0'), time.time()), "GET")
+        get_json(heartbeat_url % (nid, get_ip_address('eth0'), time.time()), "GET")
         signal.alarm(HEART_BEAT_PERIOD)
 
 def check_newfile():
@@ -71,14 +72,10 @@ def detect_files_to_play():
     print files;
     return files
 
-def play_list(files):
-    #process = Call("omxplayer --no-keys -o hdmi " + ' '.join(files), shell=True)
-    if files:
-        print("playing..." + ' '.join(files))
-        call("find upload -type f > vd.plist", shell=True)
-        return Popen("mplayer -playlist vd.plist", shell=True)
-    else:
-        return False
+def play_file(f):
+    print("playing..." + f)
+    p = Popen("omxplayer --no-keys -o hdmi '%s'" % f, shell=True)
+    if p: p.wait()
 
 def download_file(filename):
     url = download_url + filename
@@ -100,19 +97,44 @@ def update_newfile():
             else: download_file(f)
     else: raise Exception("BUG: wrong status, shouldn't be here if there's no new files!")
 
+def detect_notice_to_show():
+    ret = False
+    notice = json.loads(get_json(check_notice_url, "GET"))
+    if notice['status'] != 'no':
+       ret = notice
+    print 'detect notice: %r' % ret
+    return ret
+
+def get_notice():
+    call("wget -c '%s'" % notice_url, shell=True)
+
+def show_the_notice(notice):
+    get_notice()
+    print "There's notice for %r seconds" % notice['seconds']
+    p = Popen("sudo fbi -a -T 1 -noverbose notice.jpg", shell=True)
+    time.sleep(int(notice['seconds']))
+    p.kill()
+    get_json(clean_notice_url, "GET")
+
+def try_notify():
+    notice = detect_notice_to_show()
+    if notice:
+       show_the_notice(notice)
+
 def main():
-    get_json(register_url, "GET")
     while(True):
         print("check now...")
-        p = play_list(detect_files_to_play())
-        if check_newfile(): update_newfile()
-        if p: p.wait()
+        try_notify()
+        files = detect_files_to_play()
+	if len(files) != 0:
+           for f in files:
+               play_file(f)
+               try_notify()
         time.sleep(1)
 
 def init():
     signal.signal(signal.SIGALRM, heartbeat)
     signal.alarm(1)
-    # TODO: upload IP address
 
 if __name__ == "__main__":
     init()
