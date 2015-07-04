@@ -11,7 +11,7 @@
 (define *video-queue* (new-queue))
 (define *notice-table* (make-hash-table))
 (define notice-time 5)
-(define Q_MAX 3)
+(define Q_MAX 6)
 
 (define upload-form
   '(form (@ (method "POST") (enctype "multipart/form-data") (action "/scm/upload"))
