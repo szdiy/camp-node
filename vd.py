@@ -14,6 +14,7 @@ def get_ip_address(ifname):
 
 HEART_BEAT_PERIOD = 30 # 30 seconds
 nid = get_mac() # MAC address as the node ID
+register_url = "http://api.hack42.com/scm/node/register/%s" % nid
 check_url = "http://api.hack42.com/scm/video/check/%s" % nid
 update_url = "http://api.hack42.com/scm/video/update/%s" % nid
 download_url = "http://api.hack42.com/upload/"
@@ -74,7 +75,7 @@ def detect_files_to_play():
 
 def play_file(f):
     print("playing..." + f)
-    p = Popen("omxplayer --no-keys -o hdmi '%s'" % f, shell=True)
+    p = Popen("omxplayer --win '0 0 1920 1080' --no-keys -o hdmi '%s'" % f, shell=True)
     if p: p.wait()
 
 def download_file(filename):
@@ -111,10 +112,12 @@ def get_notice():
 def show_the_notice(notice):
     get_notice()
     print "There's notice for %r seconds" % notice['seconds']
-    p = Popen("sudo fbi -a -T 1 -noverbose notice.jpg", shell=True)
+    call("sudo fbi -a -T 1 -noverbose notice.jpg", shell=True)
     time.sleep(int(notice['seconds']))
-    p.kill()
+    #p.kill()
     get_json(clean_notice_url, "GET")
+    call("rm -f notice.jpg", shell=True)
+    call("cat /dev/zero > /dev/fb0", shell=True)
 
 def try_notify():
     notice = detect_notice_to_show()
@@ -125,14 +128,16 @@ def main():
     while(True):
         print("check now...")
         try_notify()
+        if check_newfile(): update_newfile()
         files = detect_files_to_play()
-	if len(files) != 0:
+	if files and len(files) != 0:
            for f in files:
                play_file(f)
                try_notify()
         time.sleep(1)
 
 def init():
+    get_json(register_url, "GET")
     signal.signal(signal.SIGALRM, heartbeat)
     signal.alarm(1)
 

@@ -42,6 +42,15 @@
                                        ("new-video" ,fs)))))))
        (else (:mime rc (json (object ("operation" "check") ("status" "no")))))))))
 
+(get "/scm/node/register/:id" #:mime 'json
+  (lambda (rc)
+    (cond
+     ((hash-ref *node-table* (params rc "id"))
+      (:mime rc (json (object ("operation" "register") ("status" "exists")))))
+     (else
+      (hash-set! *node-table* (params rc "id") '())
+      (:mime rc (json (object ("operation" "register") ("status" "ok"))))))))
+
 ;; NOTE: client should call update after all files are downloaded!
 (get "/scm/video/update/:id/:file" #:mime 'json
   (lambda (rc)
@@ -52,6 +61,7 @@
       (:mime rc (json (object ("operation" "update") ("status" "ok" )))))))
 
 (define (generate-note-pic note)
+  (system "rm -f notice.jpg")
   (system (format #f "convert -font ./SourceHanSansCN-Regular.otf -pointsize 20 -fill yellow -draw 'text 270,160 ~s ' spacer.jpg notice.jpg" note)))
 (define (deal-with-notification rc mfds)
   (let ((has-notify? (find-mfd rc "notify" mfds))
@@ -65,13 +75,17 @@
       ;; Regenerate notice table for each node
       (hash-for-each (lambda (k v) (hash-set! *notice-table* k #t)) *node-status*)
       (set! notice-time seconds)))))
-(define (upload-stat mfds sl fl) (list mfds (car fl) (car sl)))
+(define (upload-stat mfds sl fl)
+  (cond
+   ((and (not (null? sl)) (not (null? fl)))
+    (list mfds (car fl) (car sl)))
+   (else (list mfds "null" 0))))
 (post "/scm/upload"
   #:from-post `(store #:path "upload" #:mode #o664 #:success-ret ,upload-stat #:simple-ret? #f #:need-mfd? #t)
   #:mime 'json
   (lambda (rc)
     (when (> (queue-length *video-queue*) Q_MAX)
-          (queue-out! *node-table*))
+          (queue-out! *video-queue*))
     (match (:from-post rc 'store)
       ((mfds file size)
        (deal-with-notification rc mfds)
