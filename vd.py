@@ -25,31 +25,33 @@ clean_notice_url = "http://api.hack42.com/scm/notice/clean/%s" % nid
 VIDEO_PATH = 'video'
 
 def get_json(url, method):
-    h = httplib2.Http()
-    while(True):
-        try:
-            (res, content) = h.request(url, method)
-            return content
-        except socket.error:
-            print("Seems network error! Try it again...")
-            time.sleep(5)
-            continue
+    h = httplib2.Http(timeout=1)
+    try:
+        (res, content) = h.request(url, method)
+        return content
+    except socket.error:
+           print("Seems network error! Try it again...")
+           return False
 
 def heartbeat(signum, frame):
     if signum == signal.SIGALRM:
         print "heart beat!"
-        get_json(heartbeat_url % (nid, get_ip_address('eth0'), time.time()), "GET")
+        get_json(heartbeat_url % (nid, get_ip_address('wlan0'), time.time()), "GET")
         signal.alarm(HEART_BEAT_PERIOD)
 
 def check_newfile():
-    j = json.loads(get_json(check_url, "GET"))
+    j = get_json(check_url, "GET")
+    if not j: return False
+    j = json.loads(j)
     if j['status'] == 'no':
         print("No new video")
         return False
     else: return True
 
 def update_file(f):
-    j = json.loads(get_json(update_url + '/' + f, "GET"))
+    j = get_json(update_url + '/' + f, "GET")
+    if not j: return False
+    j = json.loads(j)
     return j['status'] == 'ok'
 
 def get_all_video(path):
@@ -75,19 +77,22 @@ def detect_files_to_play():
 
 def play_file(f):
     print("playing..." + f)
-    p = Popen("omxplayer --win '0 0 1920 1080' --no-keys -o hdmi '%s'" % f, shell=True)
+    #p = Popen("omxplayer --win '0 0 1920 1080' --no-keys -o hdmi '%s'" % f, shell=True)
+    p = Popen("mplayer '%s'" % f, shell=True)
     if p: p.wait()
 
 def download_file(filename):
     url = download_url + filename
     print(url)
-    call("wget -c '" + url + "' -P video", shell=True)
+    call("wget -b -c -o /dev/null '" + url + "' -P video", shell=True)
     print("Downloaded %s" % filename)
     update_file(filename)
     print("Updated %s" % filename)
     
 def update_newfile():
-    j = json.loads(get_json(check_url, "GET"))
+    j = get_json(check_url, "GET")
+    if not j: return False
+    j = json.loads(j)
     if j['status'] == 'update':
         print("Files need to update: %s" % j['new-video'])
         files = get_all_video(VIDEO_PATH)
@@ -100,7 +105,9 @@ def update_newfile():
 
 def detect_notice_to_show():
     ret = False
-    notice = json.loads(get_json(check_notice_url, "GET"))
+    j = get_json(check_notice_url, "GET")
+    if not j: return ret
+    notice = json.loads(j)
     if notice['status'] != 'no':
        ret = notice
     print 'detect notice: %r' % ret
