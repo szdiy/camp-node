@@ -36,7 +36,7 @@ def get_json(url, method):
 def heartbeat(signum, frame):
     if signum == signal.SIGALRM:
         print "heart beat!"
-        get_json(heartbeat_url % (nid, get_ip_address('wlan0'), time.time()), "GET")
+        get_json(heartbeat_url % (nid, get_ip_address('eth0'), time.time()), "GET")
         signal.alarm(HEART_BEAT_PERIOD)
 
 def check_newfile():
@@ -77,8 +77,8 @@ def detect_files_to_play():
 
 def play_file(f):
     print("playing..." + f)
-    #p = Popen("omxplayer --win '0 0 1920 1080' --no-keys -o hdmi '%s'" % f, shell=True)
-    p = Popen("mplayer '%s'" % f, shell=True)
+    p = Popen("omxplayer --win '0 0 1920 1080' --no-keys -o hdmi '%s'" % f, shell=True)
+    #p = Popen("mplayer '%s'" % f, shell=True)
     if p: p.wait()
 
 def download_file(filename):
@@ -114,7 +114,7 @@ def detect_notice_to_show():
     return ret
 
 def get_notice():
-    call("wget -c '%s'" % notice_url, shell=True)
+    call("wget -b -c -o /dev/null '%s'" % notice_url, shell=True)
 
 def show_the_notice(notice):
     get_notice()
@@ -122,7 +122,7 @@ def show_the_notice(notice):
     call("sudo fbi -a -T 1 -noverbose notice.jpg", shell=True)
     time.sleep(int(notice['seconds']))
     #p.kill()
-    get_json(clean_notice_url, "GET")
+    #get_json(clean_notice_url, "GET")
     call("rm -f notice.jpg", shell=True)
     call("cat /dev/zero > /dev/fb0", shell=True)
 
