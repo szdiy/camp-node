@@ -6,7 +6,7 @@ from uuid import getnode as get_mac
 import locale
 
 # set to proper locale for Chinese
-locale.setlocale(locale.LC_ALL, "zh_CN.UTF-8")
+locale.setlocale(locale.LC_ALL, "zh_CN.utf8")
 
 def get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
