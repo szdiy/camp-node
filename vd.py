@@ -1,12 +1,14 @@
 #!/usr/bin/env python
+# encoding=utf8
 
 import httplib2, json, os, socket, time, signal, fcntl, struct
 from subprocess import Popen, call, PIPE
 from uuid import getnode as get_mac
 import locale
 
-# set to proper locale for Chinese
-locale.setlocale(locale.LC_ALL, "zh_CN.utf8")
+import sys  
+reload(sys)  
+sys.setdefaultencoding('utf8')
 
 def get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -95,9 +97,9 @@ def download_file(filename):
     url = download_url + filename
     print(url)
     call("wget -b -c -o /dev/null '" + url + "' -P video", shell=True)
-    print("Downloaded %s" % filename)
+    print(u"Downloaded %s" % filename)
     update_file(filename)
-    print("Updated %s" % filename)
+    print(u"Updated %s" % filename)
     
 def update_newfile():
     j = get_json(check_url, "GET")
@@ -106,8 +108,8 @@ def update_newfile():
         print("Files need to update: %s" % j['new-video'])
         files = get_all_video(VIDEO_PATH)
         for f in j['new-video']:
-            if 'video/'+f in files:
-                print(f + " no need to update")
+            if VIDEO_PATH+f in files:
+                print(f + u" no need to update")
                 continue
             else: download_file(f)
     else: raise Exception("BUG: wrong status, shouldn't be here if there's no new files!")
@@ -118,7 +120,7 @@ def detect_notice_to_show():
     if not j: return ret
     if j['status'] != 'no':
        ret = j
-    print 'detect notice: %r' % ret
+    print 'detect notice: %s' % ret
     return ret
 
 def get_notice():
