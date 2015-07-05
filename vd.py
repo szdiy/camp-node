@@ -28,7 +28,7 @@ def decode_json(j):
     try:
        ret = json.loads(j)
     except ValueError, e:
-       print 'JSON parsing failed, possibly because Artanis is down!" 
+       print 'JSON parsing failed, possibly because Artanis is down!'
        return False
     return ret
 
