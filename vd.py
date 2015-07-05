@@ -24,11 +24,18 @@ check_notice_url = "http://api.hack42.com/scm/notice/check/%s" % nid
 clean_notice_url = "http://api.hack42.com/scm/notice/clean/%s" % nid
 VIDEO_PATH = 'video'
 
+def decode_json(j):
+    try:
+       ret = json.loads(j)
+    except ValueError, e:
+       return False
+    return ret
+
 def get_json(url, method):
     h = httplib2.Http(timeout=1)
     try:
         (res, content) = h.request(url, method)
-        return content
+        return decode_json(content)
     except socket.error:
            print("Seems network error! Try it again...")
            return False
@@ -42,7 +49,6 @@ def heartbeat(signum, frame):
 def check_newfile():
     j = get_json(check_url, "GET")
     if not j: return False
-    j = json.loads(j)
     if j['status'] == 'no':
         print("No new video")
         return False
@@ -51,7 +57,6 @@ def check_newfile():
 def update_file(f):
     j = get_json(update_url + '/' + f, "GET")
     if not j: return False
-    j = json.loads(j)
     return j['status'] == 'ok'
 
 def get_all_video(path):
@@ -92,7 +97,6 @@ def download_file(filename):
 def update_newfile():
     j = get_json(check_url, "GET")
     if not j: return False
-    j = json.loads(j)
     if j['status'] == 'update':
         print("Files need to update: %s" % j['new-video'])
         files = get_all_video(VIDEO_PATH)
@@ -107,9 +111,8 @@ def detect_notice_to_show():
     ret = False
     j = get_json(check_notice_url, "GET")
     if not j: return ret
-    notice = json.loads(j)
-    if notice['status'] != 'no':
-       ret = notice
+    if j['status'] != 'no':
+       ret = j
     print 'detect notice: %r' % ret
     return ret
 
