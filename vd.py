@@ -161,7 +161,7 @@ def init():
 
 def check_start():
     ret = bool(re.search("vd.py", check_output(["ps", "aux"])))
-    if not ret:
+    if ret:
        print "vd.py is already started!"
        exit(0)
     return
