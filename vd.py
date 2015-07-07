@@ -160,8 +160,9 @@ def init():
     signal.alarm(1)
 
 def check_start():
-    ret = bool(re.search("vd.py", check_output(["ps", "aux"])))
-    if ret:
+    ret = re.findall("vd\\.py", check_output(["ps", "aux"]))
+    print ret
+    if len(ret) > 1:
        print "vd.py is already started!"
        exit(0)
     return
