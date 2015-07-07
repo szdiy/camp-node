@@ -96,7 +96,7 @@ def play_file(f):
 def download_file(filename):
     url = download_url + filename
     print(url)
-    call("wget -b -c -o /dev/null '" + url + "' -P video", shell=True)
+    call("wget -nc -b -c -o /dev/null '" + url + "' -P video", shell=True)
     print(u"Downloaded %s" % filename)
     update_file(filename)
     print(u"Updated %s" % filename)
@@ -124,7 +124,7 @@ def detect_notice_to_show():
     return ret
 
 def get_notice():
-    call("wget -b -c -o /dev/null '%s'" % notice_url, shell=True)
+    call("wget -nc -b -c -o /dev/null '%s'" % notice_url, shell=True)
 
 def show_the_notice(notice):
     get_notice()
