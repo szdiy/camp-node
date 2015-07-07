@@ -81,7 +81,7 @@
     (list mfds (car fl) (car sl)))
    (else (list mfds "null" 0))))
 (post "/scm/upload"
-  #:from-post `(store #:path "upload" #:mode #o664 #:success-ret ,upload-stat #:simple-ret? #f #:need-mfd? #t)
+  #:from-post `(store #:path "/var/www/upload" #:mode #o664 #:success-ret ,upload-stat #:simple-ret? #f #:need-mfd? #t)
   #:mime 'json
   (lambda (rc)
     (when (> (queue-length *video-queue*) Q_MAX)
