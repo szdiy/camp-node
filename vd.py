@@ -2,7 +2,7 @@
 # encoding=utf8
 
 import httplib2, json, os, socket, time, signal, fcntl, struct
-from subprocess import Popen, call, PIPE
+from subprocess import Popen, call, PIPE, check_output
 from uuid import getnode as get_mac
 import locale
 
@@ -159,6 +159,14 @@ def init():
     signal.signal(signal.SIGALRM, heartbeat)
     signal.alarm(1)
 
+def check_start():
+    ret = bool(re.search("vd.py", check_output(["ps", "aux"])))
+    if not ret:
+       print "vd.py is already started!"
+       exit(0)
+    return
+
 if __name__ == "__main__":
+    check_start()
     init()
     main()
