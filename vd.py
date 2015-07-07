@@ -134,7 +134,7 @@ def show_the_notice(notice):
     #p.kill()
     #get_json(clean_notice_url, "GET")
     call("rm -f notice.jpg", shell=True)
-    call("cat /home/pi/camp-node/bg.bmp > /dev/fb0", shell=True)
+    call("sudo fbi -a -T 1 -noverbose bg.bmp", shell=True)
 
 def try_notify():
     notice = detect_notice_to_show()
@@ -154,7 +154,7 @@ def main():
         time.sleep(1)
 
 def init():
-    call("cat /home/pi/camp-node/bg.bmp > /dev/fb0", shell=True)
+    call("sudo fbi -a -T 1 -noverbose bg.bmp", shell=True)
     get_json(register_url, "GET")
     signal.signal(signal.SIGALRM, heartbeat)
     signal.alarm(1)
