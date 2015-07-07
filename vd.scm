@@ -14,7 +14,7 @@
 (define Q_MAX 6)
 
 (define upload-form
-  '(form (@ (method "POST") (enctype "multipart/form-data") (action "/upload"))
+  '(form (@ (method "POST") (enctype "multipart/form-data") (action "/scm/upload"))
          "File to upload: " (input (@ (type "file") (name "upfile"))) (br)
          "Multicase notification: " (input (@ (type "checkbox") (name "notify"))) (br)
          "Notice: " (input (@ (type "text") (name "note"))) (br)
