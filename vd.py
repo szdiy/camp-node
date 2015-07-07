@@ -154,6 +154,7 @@ def main():
         time.sleep(1)
 
 def init():
+    call("cat /dev/zero > /dev/fb0", shell=True)
     get_json(register_url, "GET")
     signal.signal(signal.SIGALRM, heartbeat)
     signal.alarm(1)
