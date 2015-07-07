@@ -4,7 +4,7 @@
 import httplib2, json, os, socket, time, signal, fcntl, struct
 from subprocess import Popen, call, PIPE, check_output
 from uuid import getnode as get_mac
-import locale
+import locale, re
 
 import sys  
 reload(sys)  
