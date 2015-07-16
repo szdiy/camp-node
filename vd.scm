@@ -16,17 +16,17 @@
 (define upload-form
   '(form (@ (method "POST") (enctype "multipart/form-data") (action "/scm/upload"))
          "File to upload: " (input (@ (type "file") (name "upfile"))) (br)
-         "Multicase notification: " (input (@ (type "checkbox") (name "notify"))) (br)
-         "Notice: " (input (@ (type "text") (name "note"))) (br)
-         "Seconds: " (input (@ (type "number") (name "seconds") (value "5"))) (br)
-         (br) (br)
+         ;;"Multicase notification: " (input (@ (type "checkbox") (name "notify"))) (br)
+         ;;"Notice: " (input (@ (type "text") (name "note"))) (br)
+         ;;"Seconds: " (input (@ (type "number") (name "seconds") (value "5"))) (br)
+         ;;(br) (br)
          (input (@ (type "submit") (value "Press")) "to upload the file!")))
 
-(define (get-uploaded-files)
-  (scandir "upload"
-           (lambda (s)
-             (and (not (or (string=? s ".") (string=? s "..")))
-                  (basename s)))))
+(define* (get-uploaded-files #:optional (adddir? #f))
+  (map (lambda (s) (if adddir? (string-append "/var/www/upload/" s) s))
+       (scandir "/var/www/upload"
+                (lambda (s)
+                  (and (not (or (string=? s ".") (string=? s ".."))))))))
 
 (get "/scm/video/check/:id" #:mime 'json
   (lambda (rc)
@@ -80,6 +80,11 @@
    ((and (not (null? sl)) (not (null? fl)))
     (list mfds (car fl) (car sl)))
    (else (list mfds "null" 0))))
+(define (remove-reduncant-files)
+  (let ((fl (sort (get-uploaded-files #t)
+                  (lambda (f1 f2) (>= (stat:mtime (stat f1)) (stat:mtime (stat f2)))))))
+    (for-each (lambda (f i) (and (> i Q_MAX) (delete-file f)))
+              fl (iota (length fl) 1))))
 (post "/scm/upload"
   #:from-post `(store #:path "/var/www/upload" #:mode #o664 #:success-ret ,upload-stat #:simple-ret? #f #:need-mfd? #t)
   #:mime 'json
@@ -88,7 +93,8 @@
           (queue-out! *video-queue*))
     (match (:from-post rc 'store)
       ((mfds file size)
-       (deal-with-notification rc mfds)
+       (remove-reduncant-files)
+       ;;(deal-with-notification rc mfds)
        (queue-in! *video-queue* file)
        (:mime rc (json (object ("operation" "upload") ("status" "ok") ("file" ,file) ("size" ,size)))))
       (else (:mime rc (json (object ("operation" "upload") ("status" "failed"))))))))
