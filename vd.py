@@ -160,7 +160,7 @@ def detect_notice_to_show():
 
 def update_bg():
     call("wget -o /dev/null '%s' -O bg2.jpg" % bg_url, shell=True)
-    if os.path.exists('bg.jpg') and not filecmp.cmp('bg.jpg', 'bg2.jpg'):
+    if os.path.exists('bg2.jpg') and os.path.exists('bg.jpg') and not filecmp.cmp('bg.jpg', 'bg2.jpg'):
        call("sudo killall fbi", shell=True)
        call("mv bg2.jpg bg.jpg", shell=True)
        call("sudo fbi -a -T 1 -noverbose bg.jpg", shell=True)
