@@ -159,7 +159,6 @@ def detect_notice_to_show():
 #        show_the_notice(notice)
 
 def update_bg():
-    call('rm -f bg2.jpg', shell=True)
     call("wget -o /dev/null '%s' -O bg2.jpg" % bg_url, shell=True)
     if os.path.exists and not filecmp.cmp('bg.jpg', 'bg2.jpg'):
        call("sudo killall fbi", shell=True)
@@ -179,7 +178,8 @@ def main():
         time.sleep(1)
 
 def init():
-    call("rm -fr video/*", shell=True)
+    call("rm -fr bg.jpg bg2.jpg video/*", shell=True)
+    update_bg()
     call("sudo fbi -a -T 1 -noverbose bg.jpg", shell=True)
     get_json(register_url, "GET")
     signal.signal(signal.SIGALRM, heartbeat)
