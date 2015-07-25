@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding=utf8
 
-import httplib2, json, os, socket, time, signal, fcntl, struct
+import httplib2, json, os, socket, time, signal, fcntl, struct, filecmp
 from subprocess import Popen, call, PIPE, check_output
 from uuid import getnode as get_mac
 import locale, re
@@ -158,8 +158,10 @@ def detect_notice_to_show():
 #        show_the_notice(notice)
 
 def update_bg():
-    call("rm -f bg.jpg", shell=True)
-    call("wget -nc -b -c -o /dev/null '%s'" % bg_url, shell=True)
+    call("wget -nc -b -c -o /dev/null '%s' -O bg2.jpg" % bg_url, shell=True)
+    if filecmp.cmp('bg.jpg', 'bg2.jpg'):
+       call("sudo killall fbi", shell=True)
+       call("sudo fbi -a -T 1 -noverbose bg.jpg", shell=True)
 
 def main():
     while(True):
@@ -171,7 +173,6 @@ def main():
            for f in files:
                play_file(f)
         update_bg()
-        call("sudo fbi -a -T 1 -noverbose bg.jpg", shell=True)
         time.sleep(1)
 
 def init():
