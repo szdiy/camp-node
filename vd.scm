@@ -18,8 +18,8 @@
   '(body
     (form (@ (method "POST") (enctype "multipart/form-data") (action "/scm/upload"))
           "File to upload: " (input (@ (type "file") (name "upfile"))) (br)
-          (input (@ (type "submit") (value "Press")) "to upload the file!")
-          "Clean all video!!!: " (input (@ (type "checkbox") (name "cleanall"))) (br))
+          "Clean all video!!!: " (input (@ (type "checkbox") (name "cleanall"))) (br)
+          (input (@ (type "submit") (value "Press")) "to upload the file!"))
     (br)(br)(br)
     (form (@ (method "POST") (enctype "multipart/form-data") (action "/scm/img/upload"))
           "Background to upload: " (input (@ (type "file") (name "upfile"))) (br)
