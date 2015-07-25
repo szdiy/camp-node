@@ -40,9 +40,13 @@
              (let* ((ql (get-uploaded-files))
                     (fs (lset-difference string=? ql files)))
                (format #t "upload: ~{~a~^ ~}~%~%" ql)
-               (:mime rc (json (object ("operation" "check")
-                                       ("status" "update")
-                                       ("new-video" ,fs)))))))
+               (cond
+                ((null? ql)
+                 (:mime rc (json (object ("operation" "check") ("status" "cleanall")))))
+                (else
+                 (:mime rc (json (object ("operation" "check")
+                                         ("status" "update")
+                                         ("new-video" ,fs)))))))))
        (else (:mime rc (json (object ("operation" "check") ("status" "no")))))))))
 
 (get "/scm/node/register/:id" #:mime 'json

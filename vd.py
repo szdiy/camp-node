@@ -77,6 +77,9 @@ def check_newfile():
     if j['status'] == 'no':
         print("No new video")
         return False
+    elif j['status'] == 'cleanall':
+         print('Clean all video!')
+         call('rm -f video/*', shell=True)
     else: return True
 
 def update_file(f):
@@ -159,7 +162,7 @@ def detect_notice_to_show():
 #        show_the_notice(notice)
 
 def update_bg():
-    call("wget -o /dev/null '%s' -O bg2.jpg" % bg_url, shell=True)
+    call("wget '%s' -O bg2.jpg" % bg_url, shell=True)
     if os.path.exists('bg2.jpg') and os.path.exists('bg.jpg') and not filecmp.cmp('bg.jpg', 'bg2.jpg'):
        call("sudo killall fbi", shell=True)
        call("mv bg2.jpg bg.jpg", shell=True)
