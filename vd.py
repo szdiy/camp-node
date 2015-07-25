@@ -29,13 +29,8 @@ notice_url = "http://api.hack42.com/notice.jpg"
 bg_url = "http://api.hack42.com/img/bg.jpg"
 check_notice_url = "http://api.hack42.com/scm/notice/check/%s" % nid
 clean_notice_url = "http://api.hack42.com/scm/notice/clean/%s" % nid
+clean_cmd_url = "http://api.hack42.com/scm/node/%s/cmd/clean" % nid
 VIDEO_PATH = 'video'
-
-def clear_all_files(*args):
-    call("rm -fr video/*")
-    
-CMD_HTABLE = {'clear'  : clear_all_files
-              }
 
 def decode_json(j):
     try:
@@ -54,14 +49,25 @@ def get_json(url, method):
            print("Seems network error! Try it again...")
            return False
 
-def cmd_handler(cmd, *args):
-    apply(CMD_HTABLE[cmd], args)
+def clear_all_files():
+    call("rm -fr video/*")
+    get_json(clean_cmd_url, "GET")
+
+def nop():
+    return
+
+CMD_HTABLE = {'cleanall'  : clear_all_files,
+              'none'      : nop 
+              }
+
+def cmd_handler(cmd):
+    CMD_HTABLE[cmd]()
     
 def heartbeat(signum, frame):
     if signum == signal.SIGALRM:
         print "heart beat!"
         j = get_json(heartbeat_url % (nid, get_ip_address('eth0'), time.time()), "GET")
-        if j and j['status'] == 'ok': cmd_handler(j['command'], j['args'])
+        if j and j['status'] == 'ok': cmd_handler(j['command'])
         signal.alarm(HEART_BEAT_PERIOD)
 
 def check_newfile():

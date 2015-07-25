@@ -10,6 +10,7 @@
 (define *node-table* (make-hash-table))
 (define *video-queue* (new-queue))
 (define *notice-table* (make-hash-table))
+(define *cmd-table* (make-hash-table))
 (define notice-time 5)
 (define Q_MAX 6)
 
@@ -17,7 +18,8 @@
   '(body
     (form (@ (method "POST") (enctype "multipart/form-data") (action "/scm/upload"))
           "File to upload: " (input (@ (type "file") (name "upfile"))) (br)
-          (input (@ (type "submit") (value "Press")) "to upload the file!"))
+          (input (@ (type "submit") (value "Press")) "to upload the file!")
+          "Clean all video!!!: " (input (@ (type "checkbox") (name "cleanall"))) (br))
     (br)(br)(br)
     (form (@ (method "POST") (enctype "multipart/form-data") (action "/scm/img/upload"))
           "Background to upload: " (input (@ (type "file") (name "upfile"))) (br)
@@ -64,18 +66,12 @@
 (define (generate-note-pic note)
   (system "rm -f notice.jpg")
   (system (format #f "convert -font ./SourceHanSansCN-Regular.otf -pointsize 20 -fill yellow -draw 'text 270,160 ~s ' spacer.jpg notice.jpg" note)))
-(define (deal-with-notification rc mfds)
-  (let ((has-notify? (find-mfd rc "notify" mfds))
-        (note (find-mfd rc "note" mfds))
-        (seconds (find-mfd rc "seconds" mfds)))
-    (cond
-     ((not has-notify?)
-      (format #t "There's no any notification!~%"))
-     (else
-      (generate-note-pic note)
-      ;; Regenerate notice table for each node
-      (hash-for-each (lambda (k v) (hash-set! *notice-table* k #t)) *node-status*)
-      (set! notice-time seconds)))))
+(define (need-clean-all-video?)
+  (system "rm -f /var/www/upload/*")
+  (for-each
+   (lambda (id)
+     (hash-set! *cmd-table* id "cleanall"))
+   *node-table*))
 (define (upload-stat mfds sl fl)
   (cond
    ((and (not (null? sl)) (not (null? fl)))
@@ -94,10 +90,16 @@
           (queue-out! *video-queue*))
     (match (:from-post rc 'store)
       ((mfds file size)
-       (remove-reduncant-files)
-       ;;(deal-with-notification rc mfds)
-       (queue-in! *video-queue* file)
-       (:mime rc (json (object ("operation" "upload") ("status" "ok") ("file" ,file) ("size" ,size)))))
+       (cond
+        ((find-mfd rc "cleanall" mfds)
+         (clean-all-video))
+        (else
+         (remove-reduncant-files)
+         (queue-in! *video-queue* file)
+         (:mime rc (json (object ("operation" "upload")
+                                 ("status" "ok")
+                                 ("file" ,file)
+                                 ("size" ,size)))))))
       (else (:mime rc (json (object ("operation" "upload") ("status" "failed"))))))))
 
 (define (rename-img sl fl)
@@ -113,7 +115,6 @@
       (format #f "/var/www/img/~a" f))
     (match (:from-post rc 'store)
       ((file size)
-       (format #t "upload img: ~a, ~a~%" file size)
        (rename-file (-> file) (-> "bg.jpg"))
        (:mime rc (json (object ("operation" "img-upload") ("status" "ok") ("file" ,file) ("size" ,size)))))
       (else (:mime rc (json (object ("operation" "img-upload") ("status" "failed"))))))))
@@ -132,6 +133,9 @@
          (else (lp (+ i 2) (cons (substring/shared str i (+ i 2)) ret)))))))))
 (define *node-status* (make-hash-table))
 (define *healthy-span* 35) ; little larger than 30 seconds
+(define (get-cmd id)
+  (let ((cmd (hash-ref *cmd-table* id)))
+    (if cmd cmd "none")))
 (get "/scm/heartbeat/:id/:ip/:timestamp" #:mime 'json
   (lambda (rc)
     (let* ((id (params rc "id"))
@@ -144,7 +148,12 @@
         (:mime rc (json (object ("operation" "heartbeat") ("status" "Invalid timestamp")))))
        (else
         (hash-set! *node-status* id (cons timestamp ip))
-        (:mime rc (json (object ("operation" "heartbeat") ("status" "ok")))))))))
+        (:mime rc (json (object ("operation" "heartbeat") ("command" (get-cmd id)) ("status" "ok")))))))))
+
+(get "/scm/node/:id/cmd/clean" #:mime 'json
+  (lambda (rc) 
+    (hash-remove! *cmd-table* (params rc "id"))
+    (:mime rc (json (object ("operation" "clean_cmd") ("status" "ok"))))))
 
 (define (anylize-node id st)
   (let* ((timestamp (car st))
