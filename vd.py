@@ -50,7 +50,7 @@ def get_json(url, method):
            return False
 
 def clear_all_files():
-    call("rm -fr video/*")
+    call("rm -fr video/*", shell=True)
     get_json(clean_cmd_url, "GET")
 
 def nop():
@@ -176,7 +176,7 @@ def main():
         time.sleep(1)
 
 def init():
-    call("rm -fr video/*")
+    call("rm -fr video/*", shell=True)
     call("sudo fbi -a -T 1 -noverbose bg.jpg", shell=True)
     get_json(register_url, "GET")
     signal.signal(signal.SIGALRM, heartbeat)
