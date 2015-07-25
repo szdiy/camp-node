@@ -26,9 +26,20 @@ update_url = "http://api.hack42.com/scm/video/update/%s" % nid
 download_url = "http://api.hack42.com/upload/"
 heartbeat_url = "http://api.hack42.com/scm/heartbeat/%s/%s/%s"
 notice_url = "http://api.hack42.com/notice.jpg"
+bg_url = "http://api.hack42.com/bg.jpg"
 check_notice_url = "http://api.hack42.com/scm/notice/check/%s" % nid
 clean_notice_url = "http://api.hack42.com/scm/notice/clean/%s" % nid
 VIDEO_PATH = 'video'
+
+def clear_all_files(*args):
+    call("rm -fr video/*")
+
+def update_bg():
+    call("wget -nc -b -c -o /dev/null '%s'" % bg_url, shell=True)
+    
+CMD_HTABLE = {'clear'  : clear_all_files,
+              'updatebg' : update_bg
+              }
 
 def decode_json(j):
     try:
@@ -47,10 +58,14 @@ def get_json(url, method):
            print("Seems network error! Try it again...")
            return False
 
+def cmd_handler(cmd, *args):
+    apply(CMD_HTABLE[cmd], args)
+    
 def heartbeat(signum, frame):
     if signum == signal.SIGALRM:
         print "heart beat!"
-        get_json(heartbeat_url % (nid, get_ip_address('eth0'), time.time()), "GET")
+        j = get_json(heartbeat_url % (nid, get_ip_address('eth0'), time.time()), "GET")
+        if j and j['status'] == 'ok': cmd_handler(j['command'], j['args'])
         signal.alarm(HEART_BEAT_PERIOD)
 
 def check_newfile():
@@ -123,38 +138,38 @@ def detect_notice_to_show():
     print 'detect notice: %s' % ret
     return ret
 
-def get_notice():
-    call("wget -nc -b -c -o /dev/null '%s'" % notice_url, shell=True)
+#def get_notice():
+#    call("wget -nc -b -c -o /dev/null '%s'" % notice_url, shell=True)
 
-def show_the_notice(notice):
-    get_notice()
-    print "There's notice for %r seconds" % notice['seconds']
-    call("sudo fbi -a -T 1 -noverbose notice.jpg", shell=True)
-    time.sleep(int(notice['seconds']))
-    #p.kill()
-    #get_json(clean_notice_url, "GET")
-    call("rm -f notice.jpg", shell=True)
-    call("sudo fbi -a -T 1 -noverbose bg.bmp", shell=True)
+# def show_the_notice(notice):
+#     get_notice()
+#     print "There's notice for %r seconds" % notice['seconds']
+#     call("sudo fbi -a -T 1 -noverbose notice.jpg", shell=True)
+#     time.sleep(int(notice['seconds']))
+#     #p.kill()
+#     #get_json(clean_notice_url, "GET")
+#     call("rm -f notice.jpg", shell=True)
 
-def try_notify():
-    notice = detect_notice_to_show()
-    if notice:
-       show_the_notice(notice)
+# def try_notify():
+#     notice = detect_notice_to_show()
+#     if notice:
+#        show_the_notice(notice)
 
 def main():
     while(True):
         print("check now...")
-        try_notify()
+        #try_notify()
         if check_newfile(): update_newfile()
         files = detect_files_to_play()
 	if files and len(files) != 0:
            for f in files:
                play_file(f)
                try_notify()
+        call("sudo fbi -a -T 1 -noverbose bg.jpg", shell=True)
         time.sleep(1)
 
 def init():
-    call("sudo fbi -a -T 1 -noverbose bg.bmp", shell=True)
+    call("sudo fbi -a -T 1 -noverbose bg.jpg", shell=True)
     get_json(register_url, "GET")
     signal.signal(signal.SIGALRM, heartbeat)
     signal.alarm(1)

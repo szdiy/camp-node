@@ -14,13 +14,14 @@
 (define Q_MAX 6)
 
 (define upload-form
-  '(form (@ (method "POST") (enctype "multipart/form-data") (action "/scm/upload"))
-         "File to upload: " (input (@ (type "file") (name "upfile"))) (br)
-         ;;"Multicase notification: " (input (@ (type "checkbox") (name "notify"))) (br)
-         ;;"Notice: " (input (@ (type "text") (name "note"))) (br)
-         ;;"Seconds: " (input (@ (type "number") (name "seconds") (value "5"))) (br)
-         ;;(br) (br)
-         (input (@ (type "submit") (value "Press")) "to upload the file!")))
+  '(body
+    (form (@ (method "POST") (enctype "multipart/form-data") (action "/scm/upload"))
+          "File to upload: " (input (@ (type "file") (name "upfile"))) (br)
+          (input (@ (type "submit") (value "Press")) "to upload the file!"))
+    (br)(br)(br)
+    (form (@ (method "POST") (enctype "multipart/form-data") (action "/scm/img/upload"))
+          "Background to upload: " (input (@ (type "file") (name "upfile"))) (br)
+          (input (@ (type "submit") (value "Press")) "to upload the file!"))))
 
 (define* (get-uploaded-files #:optional (adddir? #f))
   (map (lambda (s) (if adddir? (string-append "/var/www/upload/" s) s))
@@ -98,6 +99,24 @@
        (queue-in! *video-queue* file)
        (:mime rc (json (object ("operation" "upload") ("status" "ok") ("file" ,file) ("size" ,size)))))
       (else (:mime rc (json (object ("operation" "upload") ("status" "failed"))))))))
+
+(define (rename-img sl fl)
+  (cond
+   ((and (not (null? sl)) (not (null? fl)))
+    (list (car fl) (car sl)))
+   (else #f)))
+(post "/scm/img/upload"
+  #:from-post `(store #:path "/var/www/img" #:mode #o664 #:success-ret ,rename-img #:simple-ret? #f)
+  #:mime 'json
+  (lambda (rc)
+    (define-syntax-rule (-> f)
+      (format #f "/var/www/img/~a" f))
+    (match (:from-post rc 'store)
+      ((file size)
+       (format #t "upload img: ~a, ~a~%" file size)
+       (rename-file (-> file) (-> "bg.jpg"))
+       (:mime rc (json (object ("operation" "img-upload") ("status" "ok") ("file" ,file) ("size" ,size)))))
+      (else (:mime rc (json (object ("operation" "img-upload") ("status" "failed"))))))))
 
 (get "/scm/upload" (lambda () (tpl->response upload-form)))
 
