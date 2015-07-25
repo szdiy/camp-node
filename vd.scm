@@ -66,7 +66,7 @@
 (define (generate-note-pic note)
   (system "rm -f notice.jpg")
   (system (format #f "convert -font ./SourceHanSansCN-Regular.otf -pointsize 20 -fill yellow -draw 'text 270,160 ~s ' spacer.jpg notice.jpg" note)))
-(define (need-clean-all-video?)
+(define (clean-all-video)
   (system "rm -f /var/www/upload/*")
   (for-each
    (lambda (id)
