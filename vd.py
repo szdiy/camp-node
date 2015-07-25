@@ -170,7 +170,6 @@ def main():
 	if files and len(files) != 0:
            for f in files:
                play_file(f)
-               try_notify()
         update_bg()
         call("sudo fbi -a -T 1 -noverbose bg.jpg", shell=True)
         time.sleep(1)
