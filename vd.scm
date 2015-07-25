@@ -148,7 +148,7 @@
         (:mime rc (json (object ("operation" "heartbeat") ("status" "Invalid timestamp")))))
        (else
         (hash-set! *node-status* id (cons timestamp ip))
-        (:mime rc (json (object ("operation" "heartbeat") ("command" (get-cmd id)) ("status" "ok")))))))))
+        (:mime rc (json (object ("operation" "heartbeat") ("command" ,(get-cmd id)) ("status" "ok")))))))))
 
 (get "/scm/node/:id/cmd/clean" #:mime 'json
   (lambda (rc) 

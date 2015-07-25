@@ -176,6 +176,7 @@ def main():
         time.sleep(1)
 
 def init():
+    call("rm -fr video/*")
     call("sudo fbi -a -T 1 -noverbose bg.jpg", shell=True)
     get_json(register_url, "GET")
     signal.signal(signal.SIGALRM, heartbeat)
