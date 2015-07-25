@@ -33,12 +33,8 @@ VIDEO_PATH = 'video'
 
 def clear_all_files(*args):
     call("rm -fr video/*")
-
-def update_bg():
-    call("wget -nc -b -c -o /dev/null '%s'" % bg_url, shell=True)
     
-CMD_HTABLE = {'clear'  : clear_all_files,
-              'updatebg' : update_bg
+CMD_HTABLE = {'clear'  : clear_all_files
               }
 
 def decode_json(j):
@@ -155,6 +151,10 @@ def detect_notice_to_show():
 #     if notice:
 #        show_the_notice(notice)
 
+def update_bg():
+    call("rm -f bg.jpg", shell=True)
+    call("wget -nc -b -c -o /dev/null '%s'" % bg_url, shell=True)
+
 def main():
     while(True):
         print("check now...")
@@ -165,6 +165,7 @@ def main():
            for f in files:
                play_file(f)
                try_notify()
+        update_bg()
         call("sudo fbi -a -T 1 -noverbose bg.jpg", shell=True)
         time.sleep(1)
 
