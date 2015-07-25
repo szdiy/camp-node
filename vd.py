@@ -2,6 +2,7 @@
 # encoding=utf8
 
 import httplib2, json, os, socket, time, signal, fcntl, struct, filecmp
+import os.path
 from subprocess import Popen, call, PIPE, check_output
 from uuid import getnode as get_mac
 import locale, re
@@ -158,10 +159,10 @@ def detect_notice_to_show():
 #        show_the_notice(notice)
 
 def update_bg():
-    call("wget -b -o /dev/null '%s' -O bg2.jpg" % bg_url, shell=True)
-    if not filecmp.cmp('bg.jpg', 'bg2.jpg'):
+    call("wget -o /dev/null '%s' -O bg2.jpg" % bg_url, shell=True)
+    if os.path.exists and not filecmp.cmp('bg.jpg', 'bg2.jpg'):
        call("sudo killall fbi", shell=True)
-       call("cp -f bg2.jpg bg.jpg", shell=True)
+       call("mv bg2.jpg bg.jpg", shell=True)
        call("sudo fbi -a -T 1 -noverbose bg.jpg", shell=True)
 
 def main():
