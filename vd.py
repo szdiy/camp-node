@@ -158,8 +158,8 @@ def detect_notice_to_show():
 #        show_the_notice(notice)
 
 def update_bg():
-    call("wget '%s' -O bg2.jpg" % bg_url, shell=True)
-    if filecmp.cmp('bg.jpg', 'bg2.jpg'):
+    call("wget -b '%s' -O bg2.jpg" % bg_url, shell=True)
+    if not filecmp.cmp('bg.jpg', 'bg2.jpg'):
        call("sudo killall fbi", shell=True)
        call("mv bg2.jpg bg.jpg", shell=True)
        call("sudo fbi -a -T 1 -noverbose bg.jpg", shell=True)
