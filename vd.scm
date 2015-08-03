@@ -51,12 +51,8 @@
 
 (get "/scm/node/register/:id" #:mime 'json
   (lambda (rc)
-    (cond
-     ((hash-ref *node-table* (params rc "id"))
-      (:mime rc (json (object ("operation" "register") ("status" "exists")))))
-     (else
-      (hash-set! *node-table* (params rc "id") '())
-      (:mime rc (json (object ("operation" "register") ("status" "ok"))))))))
+    (hash-set! *node-table* (params rc "id") '())
+    (:mime rc (json (object ("operation" "register") ("status" "ok"))))))
 
 ;; NOTE: client should call update after all files are downloaded!
 (get "/scm/video/update/:id/:file" #:mime 'json
