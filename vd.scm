@@ -70,9 +70,9 @@
   (system "rm -f /var/www/upload/*")
   (hash-for-each
    (lambda (id st)
-     (hash-set! *cmd-table* id "cleanall"))
+     (hash-set! *cmd-table* id "cleanall")
      (hash-set! *node-table* id '()))
-   *node-table*)
+   *node-table*))
 (define (upload-stat mfds sl fl)
   (cond
    ((and (not (null? sl)) (not (null? fl)))
