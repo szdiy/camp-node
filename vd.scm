@@ -72,8 +72,8 @@
   (system (format #f "convert -font ./SourceHanSansCN-Regular.otf -pointsize 20 -fill yellow -draw 'text 270,160 ~s ' spacer.jpg notice.jpg" note)))
 (define (clean-all-video)
   (system "rm -f /var/www/upload/*")
-  (for-each
-   (lambda (id)
+  (hash-for-each
+   (lambda (id st)
      (hash-set! *cmd-table* id "cleanall"))
    *node-table*))
 (define (upload-stat mfds sl fl)
