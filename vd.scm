@@ -95,6 +95,7 @@
     (match (:from-post rc 'store)
       ((mfds file size)
        (when (find-mfd rc "cleanall" mfds)
+             (format #t "Clean all now!~%")
              (clean-all-video))
        (remove-reduncant-files)
        (queue-in! *video-queue* file)
@@ -152,7 +153,7 @@
         (hash-set! *node-status* id (cons timestamp ip))
         (:mime rc (json (object ("operation" "heartbeat") ("command" ,(get-cmd id)) ("status" "ok")))))))))
 
-(get "/scm/node/:id/cmd/clean" #:mime 'json
+(post "/scm/node/:id/cmd/clean" #:mime 'json
   (lambda (rc) 
     (hash-remove! *cmd-table* (params rc "id"))
     (:mime rc (json (object ("operation" "clean_cmd") ("status" "ok"))))))

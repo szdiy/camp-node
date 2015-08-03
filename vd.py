@@ -52,7 +52,7 @@ def get_json(url, method):
 
 def clear_all_files():
     call("rm -fr video/*", shell=True)
-    get_json(clean_cmd_url, "GET")
+    get_json(clean_cmd_url, "POST")
 
 def nop():
     return
