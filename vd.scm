@@ -71,8 +71,8 @@
   (hash-for-each
    (lambda (id st)
      (hash-set! *cmd-table* id "cleanall"))
+     (hash-set! *node-table* id '()))
    *node-table*)
-  (hash-set! *node-table* (params rc "id") '()))
 (define (upload-stat mfds sl fl)
   (cond
    ((and (not (null? sl)) (not (null? fl)))
