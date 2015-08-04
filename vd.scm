@@ -147,6 +147,9 @@
        ((not timestamp)
         (:mime rc (json (object ("operation" "heartbeat") ("status" "Invalid timestamp")))))
        (else
+        ;; register node, in case server is down
+        (when (not (hash-ref *node-table* id))
+              (hash-set! *node-table* id '()))
         (hash-set! *node-status* id (cons timestamp ip))
         (:mime rc (json (object ("operation" "heartbeat") ("command" ,(get-cmd id)) ("status" "ok")))))))))
 
