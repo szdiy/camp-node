@@ -112,11 +112,7 @@ def play_file(f):
     print("playing..." + f)
     p = Popen("omxplayer --win '0 0 1920 1080' --no-keys -o hdmi '%s'" % f, shell=True)
     #p = Popen("mplayer '%s'" % f, shell=True)
-    if p:
-       p.wait()
-       call("killall omxplayer", shell=True)
-       call("killall omxplayer.bin", shell=True)
-
+    if p: p.wait()
 
 def download_file(filename):
     url = download_url + filename
