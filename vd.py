@@ -109,6 +109,8 @@ def detect_files_to_play():
     return files
 
 def play_file(f):
+    call("killall omxplayer", shell=True)
+    call("killall omxplayer.bin", shell=True)
     print("playing..." + f)
     p = Popen("omxplayer --win '0 0 1920 1080' --no-keys -o hdmi '%s'" % f, shell=True)
     #p = Popen("mplayer '%s'" % f, shell=True)
@@ -182,6 +184,8 @@ def main():
 
 def init():
     call("rm -fr bg.jpg bg2.jpg video/*", shell=True)
+    call("killall omxplayer", shell=True)
+    call("killall omxplayer.bin", shell=True)
     call("wget -o /dev/null '%s' -O bg.jpg" % bg_url, shell=True)
     call("sudo fbi -a -T 1 -noverbose bg.jpg", shell=True)
     get_json(register_url, "GET")
