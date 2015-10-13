@@ -109,12 +109,14 @@ def detect_files_to_play():
     return files
 
 def play_file(f):
-    call("killall omxplayer", shell=True)
-    call("killall omxplayer.bin", shell=True)
     print("playing..." + f)
     p = Popen("omxplayer --win '0 0 1920 1080' --no-keys -o hdmi '%s'" % f, shell=True)
     #p = Popen("mplayer '%s'" % f, shell=True)
-    if p: p.wait()
+    if p:
+       p.wait()
+       call("killall omxplayer", shell=True)
+       call("killall omxplayer.bin", shell=True)
+
 
 def download_file(filename):
     url = download_url + filename
