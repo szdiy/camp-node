@@ -118,6 +118,7 @@ def download_file(filename):
     url = download_url + filename
     print(url)
     call("wget -nc -b -c -o /dev/null '" + url + "' -P video", shell=True)
+    time.sleep(5)
     print(u"Downloaded %s" % filename)
     update_file(filename)
     print(u"Updated %s" % filename)
